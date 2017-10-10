@@ -10,7 +10,7 @@
 
 import ctypes
 from ctypes import wintypes, c_int, byref
-import time, random
+import time, random, keyboardCombos
 
 user32 = ctypes.WinDLL('user32', use_last_error=True)
 
@@ -41,10 +41,6 @@ SQUARE      = 0x52 # R key
 CIRCLE      = 0x54 # T key
 TRIANGLE    = 0x59 # Y key
 R1          = 0x51 # Q key
-
-
-# http://www.gamespp.com/directx/directInputKeyboardScanCodes.html\
-DIK_RIGHT = 0xCD
 
 wintypes.ULONG_PTR = wintypes.WPARAM
 
@@ -175,6 +171,7 @@ def HoldDelay():
 
 def QuickPressDelay():
     time.sleep(random.uniform(0.05, 0.1))
+
 def strafe():
     PressKey(DPAD_UP)
     HoldDelay()
@@ -185,8 +182,24 @@ def strafe():
     ReleaseKey(DPAD_UP)
     HoldDelay()
 
-def Directions(1):
+def ExecuteActions(actions):
+    # start from 1 because first index is the delay time
+    for i in range(1,len(actions)-1):
+        PressKey(actions[i])
 
+    time.sleep(actions[0][0])
+    # start from 1 because first index is the delay time
+    for i in range(1,len(actions)-1):
+        ReleaseKey(actions[i])
+    time.sleep(random.uniform(0.01, 0.5))
+
+def ChooseRandomCommands():
+    x = 100
+    while x > 0:
+        amount = random.randint(0,7)
+        actions = keyboardCombos.GetActions(amount=amount)
+        ExecuteActions(actions=actions)
+        x = x-1
 
 def AltTab():
     """Press Alt+Tab and hold Alt key for 2 seconds
@@ -203,7 +216,7 @@ if __name__ == "__main__":
     GetRemotePlayPID()
     FocusWindow(global_PS4RemotePlayHWND)
     time.sleep(1)
-    strafe()
+    ChooseRandomCommands()
     time.sleep(1)
     ControlAltForREMAP()
 
