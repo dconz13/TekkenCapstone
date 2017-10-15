@@ -1,5 +1,8 @@
-import time
+# To use this code the PS4 Remote Play window must be in the top left corner of the desired screen.
+# Otherwise the offsets for the leftHPCapture and rightHPCapture variables must be updated to wrap
+# the hp bars.
 
+import time
 import cv2
 from mss.windows import MSS as mss
 import numpy as np
@@ -19,18 +22,18 @@ def capture_img():
         prevLeft = prevLeft.clip(min=0)
         prevRight = prevRight.clip(min=0)
         while 'Screen capturing':
-            #last_time = time.time()
             # Get raw pixels from the screen, save it to a Numpy array
             currLeft = np.array(sct.grab(leftHPCapture))
             currRight = np.array(sct.grab(rightHPCapture))
 
-            # # Display the picture
+            # # Uncomment to display the picture
             # cv2.imshow('OpenCV/Numpy normal', currRight)
             #
             # # Press "q" to quit
             # if cv2.waitKey(25) & 0xFF == ord('q'):
             #     cv2.destroyAllWindows()
             #     break
+
             # convert to grayscale
             currLeft = np.dot(currLeft[...,:3], [0.299,0.587,0.114])
             currRight = np.dot(currRight[...,:3], [0.299,0.587,0.114])
