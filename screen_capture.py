@@ -4,12 +4,14 @@
 
 import time
 import cv2
-from mss.windows import MSS as mss
+import mss
+#from mss.windows import MSS as mss
 import numpy as np
 
 def capture_img():
     with mss.mss() as sct:
         # Part of the screen to capture
+        screen = {'top': 40, 'left': 0, 'width': 640, 'height': 350}
         leftHPCapture = {'top': 62, 'left': 84, 'width': 201, 'height': 12}
         rightHPCapture = {'top': 62, 'left': 360, 'width': 201, 'height': 12}
 
@@ -23,18 +25,11 @@ def capture_img():
         prevRight = prevRight.clip(min=0)
         while 'Screen capturing':
             # Get raw pixels from the screen, save it to a Numpy array
+            currScreen = np.array(sct.grab(screen))
             currLeft = np.array(sct.grab(leftHPCapture))
             currRight = np.array(sct.grab(rightHPCapture))
 
-            # # Uncomment to display the picture
-            # cv2.imshow('OpenCV/Numpy normal', currRight)
-            #
-            # # Press "q" to quit
-            # if cv2.waitKey(25) & 0xFF == ord('q'):
-            #     cv2.destroyAllWindows()
-            #     break
-
-            # convert to grayscale
+            #convert to grayscale
             currLeft = np.dot(currLeft[...,:3], [0.299,0.587,0.114])
             currRight = np.dot(currRight[...,:3], [0.299,0.587,0.114])
             # get the difference in previous vs current
@@ -52,7 +47,14 @@ def capture_img():
             # Set previous frame data to current frame data
             prevLeft = currLeft
             prevRight = currRight
-            # Sleep to reduce fps
+            # Uncomment to display the picture
+            cv2.imshow('OpenCV/Numpy normal', currScreen)
+
+            # Press "q" to quit
+            if cv2.waitKey(25) & 0xFF == ord('q'):
+                cv2.destroyAllWindows()
+                break
+            #Sleep to reduce fps
             time.sleep(0.15)
 
 if __name__ == "__main__":
