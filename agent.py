@@ -23,6 +23,7 @@ class LearningAgent(Agent):
 
 # Gets screen data for HP/screen monitoring and reward feedback
 import mss
+from PIL import Image
 class Vision:
     screen = {'top': 40, 'left': 0, 'width': 640, 'height': 350}
     leftHPCapture = {'top': 62, 'left': 84, 'width': 201, 'height': 12}
@@ -43,7 +44,10 @@ class Vision:
 
     def getCurrentScreen(self):
         with mss as sct():
-            currScreen = np.array(sct.grab(screen))
+            sct_img = sct.grab(screen)
+            img = Image.frombytes('RGB', sct_img.size, sct_img.rgb)
+            img = img.resize((85,85), Image.LANCZOS)
+            currScreen = np.array(img)
             return numpyImgToGray(currScreen)
 
     def getReward(self):

@@ -7,6 +7,7 @@ import cv2
 import mss
 #from mss.windows import MSS as mss
 import numpy as np
+from PIL import Image
 
 def capture_img():
     with mss.mss() as sct:
@@ -25,7 +26,8 @@ def capture_img():
         prevRight = prevRight.clip(min=0)
         while 'Screen capturing':
             # Get raw pixels from the screen, save it to a Numpy array
-            currScreen = np.array(sct.grab(screen))
+            #currScreen = np.array(sct.grab(screen))
+            currScreen = sct.grab(screen)
             currLeft = np.array(sct.grab(leftHPCapture))
             currRight = np.array(sct.grab(rightHPCapture))
 
@@ -47,6 +49,10 @@ def capture_img():
             # Set previous frame data to current frame data
             prevLeft = currLeft
             prevRight = currRight
+
+            img = Image.frombytes('RGB', currScreen.size, currScreen.rgb)
+            img = img.resize((85,85), Image.LANCZOS)
+            currScreen = np.array(img)
             # Uncomment to display the picture
             cv2.imshow('OpenCV/Numpy normal', currScreen)
 
