@@ -44,8 +44,7 @@ class Vision:
     def getCurrentScreen(self):
         with mss as sct():
             currScreen = np.array(sct.grab(screen))
-            currScreen = numpyImgToGray(currScreen)
-            return currScreen
+            return numpyImgToGray(currScreen)
 
     def getReward(self):
         with mss as sct():
@@ -83,7 +82,7 @@ class Vision:
 # SumTree of previous decisions
 class Memory:
     def __init__(self, capacity, epsilon=1.0, alpha=0.5):
-        self.tree = SumTree(capcity)
+        self.tree = SumTree(capacity)
         self.epsilon = epsilon
         self.alpha = alpha
 
