@@ -86,9 +86,9 @@ class LearningAgent(Agent):
     epsilon = MAX_EPSILON
 
     def __init__(self, learning=false, epsilon=1.0, alpha=0.5):
-        super(LearningAgent, self).__init__()
-        self.inputHandler = KeyboardCombos()
-        self.valid_actions = []
+        #super(LearningAgent, self).__init__()
+        self.input_handler = InputHandler()
+        #self.valid_actions = []
 
     def reset(self, testing=False):
         # Call me when a "round" is over
@@ -108,10 +108,17 @@ class LearningAgent(Agent):
 
     def choose_action(self, state):
         # call when the agent must make a decision based on the state
-        if self.learning == False:
-            action = self.valid_actions[]
+        self.state = state
+        self.step_count_total += 1
+        action = None
 
-        if random.random() < self.epsilon:
+        if self.learning == False:
+            action = self.input_handler.get_actions(random.randint(0,7))
+        else:
+            if random.uniform(0,1) < self.epsilon:
+                action = self.input_handler.get_actions(random.randint(0,7))
+            else:
+                '''TODO: pick actions that are from memory'''
         pass
 
     def learn(self, state,action,reward):
