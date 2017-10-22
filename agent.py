@@ -1,7 +1,9 @@
 # Main file for the neural network
-# atari network
+# references:
 # https://arxiv.org/pdf/1312.5602.pdf
 # https://jaromiru.com/2016/11/07/lets-make-a-dqn-double-learning-and-prioritized-experience-replay/
+# https://github.com/DavidSanwald/DDQN
+
 import os
 import random
 import numpy as np
@@ -9,28 +11,39 @@ from SumTree import SumTree
 from keras.models import Sequential
 from keras.layers import Conv2D, Dense, Flatten
 from keras.optimizers import *
-from keyboardCombos import KeyboardCombos
-from windowsInputHandler import InputHandler
+from windowsInputHandler import *
 
 IMAGE_STACK = 2
 IMAGE_WIDTH = 84
 IMAGE_HEIGHT = 84
+HUBER_LOSS_DELTA = 2.0
 LEARNING_RATE = 0.00025
 
+def huber_loss(y_true, y_pred):
+    err = y_true - y_pred
+
+    cond = K.abs(err) < HUBER_LOSS_DELTA
+    L2 = 0.5*K.square(err)
+    L1 = HUBER_LOSS_DELTA * (K.abs(err) - 0.5 * HUBER_LOSS_DELTA)
+
+    loss = tf.where(cond, L2, L1)
+
+    return K.mean(loss)
 
 class Model:
 
-    def __init__(self, stateCnt, actionCnt):
-        self.stateCnt = stateCnt
+    def __init__(self, input_shape, actionCnt):
+        self.input_shape = input_shape
         self.actionCnt = actionCnt
 
-        self.model = self._createModl()
+        self.model = self._createModel()
         self.target_model = self._createModel()
 
     def _createModel(self):
         model = Sequential()
 
-        model.add(Conv2D(32, (8,8), strides=(4,4), activation='relu', input_shape=(self.stateCnt), data_format='channels_first'))
+        # channels_first mode (batch, channels, height, width)
+        model.add(Conv2D(32, (8,8), strides=(4,4), activation='relu', input_shape=(self.input_shape), data_format='channels_first'))
         model.add(Conv2D(64, (4,4), strides=(2,2), activation='relu'))
         model.add(Conv2D(64, (3,3), activation='relu'))
         model.add(Flatten())
@@ -57,11 +70,24 @@ class Model:
     def update_target_model(self):
         self.target_model.set_weights(self.model.get_weights())
 
+MEMORY_CAPACITY = 200000
+BATCH_SIZE = 32
+GAMMA = 0.99
+MAX_EPSILON = 1
+MIN_EPSILON = 0.1
+
+EXPLORATION_STOP = 500000
+LAMBDA = - math.log(0.01) / EXPLORATION_STOP
+
+UPDATE_TARGET_FREQUENCY = 10000
+
 class LearningAgent(Agent):
+    steps = 0
+    epsilon = MAX_EPSILON
 
     def __init__(self, learning=false, epsilon=1.0, alpha=0.5):
         super(LearningAgent, self).__init__()
-        self.inputHandler = KeyboardCombos(self)
+        self.inputHandler = KeyboardCombos()
         self.valid_actions = []
 
     def reset(self, testing=False):
@@ -82,6 +108,10 @@ class LearningAgent(Agent):
 
     def choose_action(self, state):
         # call when the agent must make a decision based on the state
+        if self.learning == False:
+            action = self.valid_actions[]
+
+        if random.random() < self.epsilon:
         pass
 
     def learn(self, state,action,reward):
@@ -91,6 +121,25 @@ class LearningAgent(Agent):
 
     def update(self):
         pass
+
+# Simple class to hold the 2 frames for the model to read.
+class ImageContainer:
+    def __init__(self, frame1, frame2):
+        self.frame1 = frame1
+        self.frame2 = frame2
+
+    def getFrame1(self):
+        return self.frame1
+
+    def setFrame1(self, frame1):
+        self.frame1 = frame1
+
+    def getFrame2(self):
+        return self.frame2
+
+    def setFrame2(self, frame2):
+        self.frame2 = frame2
+
 
 # Gets screen data for HP/screen monitoring and reward feedback
 import mss
