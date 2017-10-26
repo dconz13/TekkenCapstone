@@ -24,6 +24,8 @@ def capture_img():
         # round up negatives to 0
         prevLeft = prevLeft.clip(min=0)
         prevRight = prevRight.clip(min=0)
+
+        last_time = time.time()
         while 'Screen capturing':
             # Get raw pixels from the screen, save it to a Numpy array
             #currScreen = np.array(sct.grab(screen))
@@ -60,8 +62,11 @@ def capture_img():
             if cv2.waitKey(25) & 0xFF == ord('q'):
                 cv2.destroyAllWindows()
                 break
-            #Sleep to reduce fps
-            time.sleep(0.15)
+
+            # print('fps: {}'.format(1 / (time.time()-last_time)))
+            # last_time = time.time()
+            #Sleep to reduce fps to 2 fps
+            time.sleep(0.4)
 
 if __name__ == "__main__":
     capture_img()
