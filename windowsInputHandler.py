@@ -26,12 +26,10 @@ KEYEVENTF_SCANCODE    = 0x0008
 MAPVK_VK_TO_VSC = 0
 
 # msdn.microsoft.com/en-us/library/dd375731
-VK_TAB      = 0x09 # Tab key
 VK_LMENU    = 0x12 # Left Alt key
 VK_LCONTROL = 0xA2 # Left Ctrl key
-VK_RIGHT    = 0x27 # Right arrow key
-LK_LWIN     = 0x5B # Left Windows key
-VK_6        = 0x36 # 6 key
+
+# Playstation valid buttons
 DPAD_UP     = 0x57 # W key
 DPAD_DOWN   = 0x53 # S key
 DPAD_LEFT   = 0x41 # A key
@@ -41,17 +39,34 @@ SQUARE      = 0x52 # R key
 CIRCLE      = 0x54 # T key
 TRIANGLE    = 0x59 # Y key
 R1          = 0x51 # Q key
+TOUCHPAD    = 0x58 # X key
+
+# Diagonal directional buttons with arbitrary values
+DIAG_DOWN_LEFT = (DPAD_LEFT, DPAD_DOWN)
+DIAG_DOWN_RIGHT = (DPAD_RIGHT, DPAD_DOWN)
+DIAG_UP_LEFT = (DPAD_LEFT, DPAD_UP)
+DIAG_UP_RIGHT = (DPAD_RIGHT, DPAD_UP)
+
+# Multi button attacks with arbitrary values
+CROSS_SQUARE = (CROSS, SQUARE)
+CROSS_CIRCLE = (CROSS, CIRCLE)
+SQUARE_TRIANGLE = (SQUARE, TRIANGLE)
+TRIANGLE_CIRCLE = (TRIANGLE, CIRCLE)
+
+# Direction + attack combos with arbitrary values
+
 
 # delay to hold the keypresses for
 # :random.uniform(0.1, 0.2) for hold
 # :random.uniform(0.05, 0.1) for tap
 delay = ['hold','tap']
-# all valid actions
-valid_actions = [0, DPAD_UP, DPAD_DOWN, DPAD_LEFT, DPAD_RIGHT, TRIANGLE, CIRCLE, CROSS, SQUARE, R1]
 # available inputs by type
-direction = [0, DPAD_UP, DPAD_DOWN, DPAD_LEFT, DPAD_RIGHT]
-attack = [0, TRIANGLE, CIRCLE, CROSS, SQUARE]
+direction = [0, DPAD_UP, DPAD_DOWN, DPAD_LEFT, DPAD_RIGHT, DIAG_DOWN_LEFT, DIAG_DOWN_RIGHT, DIAG_UP_LEFT, DIAG_UP_RIGHT]
+attack = [0, TRIANGLE, CIRCLE, CROSS, SQUARE, CROSS_SQUARE, CROSS_CIRCLE, SQUARE_TRIANGLE, TRIANGLE_CIRCLE]
 rage = [R1]
+
+# all valid actions
+valid_actions = [(x,y) for x in direction for y in attack]
 
 
 wintypes.ULONG_PTR = wintypes.WPARAM
@@ -92,6 +107,11 @@ class INPUT(ctypes.Structure):
     _fields_ = (("type",   wintypes.DWORD),
                 ("_input", _INPUT))
 
+def _check_count(result, func, args):
+    if result == 0:
+        raise ctypes.WinError(ctypes.get_last_error())
+    return args
+
 class InputHandler:
 
     LPINPUT = ctypes.POINTER(INPUT)
@@ -104,10 +124,6 @@ class InputHandler:
         self.PS4RemotePlayHWND = 0
         self.PS4RemotePlayPID = 0
 # Functions
-    def _check_count(self, result, func, args):
-        if result == 0:
-            raise ctypes.WinError(ctypes.get_last_error())
-        return args
 
     def get_actions(self, amount):
         actions = []
@@ -133,6 +149,9 @@ class InputHandler:
             # can't use i as the index because I am only adding non 0 inputs
             actions[0].append(random.uniform(0.05, 0.1))
         return actions
+
+    def get_action(self, index):
+        return valid_actions[index]
 
     def get_remote_play_pid(self):
         # register winapi functions
@@ -186,18 +205,76 @@ class InputHandler:
 
     def activate_remap(self):
         time.sleep(0.5)
-        press_key(VK_LCONTROL)
-        press_key(VK_LMENU)
+        self.press_key(VK_LCONTROL)
+        self.press_key(VK_LMENU)
         time.sleep(0.01)
-        release_key(VK_LCONTROL)
-        release_key(VK_LMENU)
+        self.release_key(VK_LCONTROL)
+        self.release_key(VK_LMENU)
         time.sleep(0.01)
 
     def hold_delay(self):
         time.sleep(random.uniform(0.1, 0.2))
 
     def quick_press_delay(self):
-        time.sleep(random.uniform(0.05, 0.1))
+        time.sleep(random.uniform(0.05, 0.07))
+
+    def reset_players(self):
+        self.press_key(TOUCHPAD)
+        self.press_key(CROSS)
+        self.quick_press_delay()
+        self.release_key(TOUCHPAD)
+        self.release_key(CROSS)
+
+    def execute_action(self, actionIndex):
+        action = valid_actions[actionIndex]
+        '''TODO: this won't run because you can't do len(int) it will throw typeError.
+                 maybe intentionally throw error? '''
+        # Press first button pair
+        #if len(action[0]) > 1:
+        if isinstance(action[0], tuple):
+            if action[0][0] != 0:
+                self.press_key(action[0][0])
+            if action[0][1] != 0:
+                self.press_key(action[0][1])
+        else:
+            if action[0] != 0:
+                self.press_key(action[0])
+
+        # Press second button pair
+        #if len(action[1]) > 1:
+        if isinstance(action[1], tuple):
+            if action[1][0] != 0:
+                self.press_key(action[1][0])
+            if action[1][1] != 0:
+                self.press_key(action[1][1])
+        else:
+            if action[1] != 0:
+                self.press_key(action[1])
+        # Delay so the game can receive input
+        self.quick_press_delay()
+
+        # Release first button pair
+        #if len(action[0]) > 1:
+        if isinstance(action[0], tuple):
+            if action[0][0] != 0:
+                self.release_key(action[0][0])
+            if action[0][1] != 0:
+                self.release_key(action[0][1])
+        else:
+            if action[0] != 0:
+                self.release_key(action[0])
+
+        # Release second button pair
+        #if len(action[1]) > 1:
+        if isinstance(action[1], tuple):
+            if action[1][0] != 0:
+                self.release_key(action[1][0])
+            if action[1][1] != 0:
+                self.release_key(action[1][1])
+        else:
+            if action[1] != 0:
+                self.release_key(action[1])
+        #self.quick_press_delay()
 
     def execute_actions(actions):
         # start from 1 because first index is the delay time

@@ -71,7 +71,7 @@ class Model:
     def update_target_model(self):
         self.target_model.set_weights(self.model.get_weights())
 
-MEMORY_CAPACITY = 200000
+MEMORY_CAPACITY = 400000
 BATCH_SIZE = 32
 GAMMA = 0.99
 MAX_EPSILON = 1
@@ -287,6 +287,7 @@ def run(agent):
     except KeyboardInterrupt:
         print("Total Reward:", rewardTotal)
         agent.model.model.save("TekkenBotDDQNRound1.h5")
+        print("Model saved as: TekkenBotDDQNRound1.h5")
 
 if __name__ == '__main__':
     try:
@@ -294,4 +295,4 @@ if __name__ == '__main__':
         run(agent)
     finally:
         i = InputHandler()
-        i.activate_remap()
+        #i.activate_remap()
