@@ -8,8 +8,11 @@ import os
 import random
 import math
 import numpy as np
+import time
 from SumTree import SumTree
 from keras.models import Sequential
+from keras.models import load_model
+from keras.utils import plot_model
 from keras.layers import Conv2D, Dense, Flatten
 from keras.optimizers import *
 from windowsInputHandler import *
@@ -84,6 +87,7 @@ UPDATE_TARGET_FREQUENCY = 10000
 
 class LearningAgent:
     steps = 0
+    latest_Q = 0
     epsilon = MAX_EPSILON
 
     def __init__(self, learning=False, epsilon=1.0, alpha=0.5):
@@ -134,6 +138,7 @@ class LearningAgent:
             x[i] = s
             y[i] = t
             errors[i] = abs(oldVal - t[a])
+            self.latest_Q = t[a]
 
         return (x, y, errors)
 
@@ -261,14 +266,31 @@ class Memory:
         p = self._getPriority(error)
         self.tree.update(idx, p)
 
+def import_model(agent):
+    try:
+        agent.model = load_model('TekkenBotDDQNRound1.h5', custom_objects={'huber_loss':huber_loss})
+        print('Model loaded for agent.')
+        plot_model(agent.model, to_file='TekkenBotDDQNRound1.png')
+        print('Loaded model plotted.')
+    except Exception as e:
+        print('Model failed to load.')
+        print(e)
+
 # lets start the show
 def run(agent):
     agent.input_handler.activate_remap()
+    # character is on the left side of the screen
     vision = Vision('left')
     w = vision.get_current_screen()
     state = np.array([w,w])
+    start_time = time.time()
 
+    # total reward for the episode
     rewardTotal = 0
+    # initial episode
+    episode = 0
+    reward_per_episode = np.empty()
+
     # Press Ctrl + C to break out of the program.
     try:
         while True:
@@ -284,15 +306,32 @@ def run(agent):
 
             state = statePrime
             rewardTotal = rewardTotal + reward
+            if time.time() - start_time > 59: # reset players every minute. That's how arcade mode works.
+                reward_per_episode.append([episode, rewardTotal, agent.steps, agent.latest_Q])
+                print("Episode {}".format(episode) + " Ended. Reward earned: {}".format(rewardTotal))
+                episode += 1
+                rewardTotal = 0
+                agent.reset_players()
+            if episodes > 720: # 12 hours
+                agent.activate_remap()
+                raise KeyboardInterrupt('Episodes limit reached')
+
     except KeyboardInterrupt:
         print("Total Reward:", rewardTotal)
-        agent.model.model.save("TekkenBotDDQNRound1.h5")
+        agent.model.model.save("TekkenBotDDQNRound1.h5", overwrite=True)
         print("Model saved as: TekkenBotDDQNRound1.h5")
+
+        # finish up reward array and save it.
+        reward_per_episode.append([episode, rewardTotal, agent.steps, agent.latest_Q])
+        print("Episode {}".format(episode) + " Ended. Reward earned: {}".format(rewardTotal))
+        np.savetxt('episodesAndRewards.txt', reward_per_episode, fmt='%d')
+        print("Episodes and rewards saved to episodesAndRewards.txt")
 
 if __name__ == '__main__':
     try:
         agent = LearningAgent(learning=True, epsilon=MAX_EPSILON, alpha=LEARNING_RATE)
+        import_model(agent)
         run(agent)
     finally:
-        i = InputHandler()
+        #i = InputHandler()
         #i.activate_remap()
