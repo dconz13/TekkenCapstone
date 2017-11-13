@@ -36,12 +36,16 @@ def huber_loss(y_true, y_pred):
 
 class Model:
 
-    def __init__(self, input_shape, actionCnt):
+    def __init__(self, input_shape, actionCnt, model=None, target_model=None):
         self.input_shape = input_shape
         self.actionCnt = actionCnt
 
-        self.model = self._createModel()
-        self.target_model = self._createModel()
+        if model is not None: # a model was loaded from memory.
+            self.model = model
+            self.target_model = target_model
+        else: # First time run
+            self.model = self._createModel()
+            self.target_model = self._createModel()
 
     def _createModel(self):
         model = Sequential()
@@ -268,7 +272,8 @@ class Memory:
 
 def import_model(agent):
     try:
-        agent.model = load_model('TekkenBotDDQNRound1.h5', custom_objects={'huber_loss':huber_loss})
+        agent.model = Model(agent.inputShape, agent.numActions,
+            load_model('TekkenBotDDQNRound1.h5', custom_objects={'huber_loss':huber_loss}), load_model('TekkenBotDDQNRound1.h5', custom_objects={'huber_loss':huber_loss}))
         print('Model loaded for agent.')
         #plot_model(agent.model, to_file='TekkenBotDDQNRound1.png')
         #print('Loaded model plotted.')
@@ -308,7 +313,7 @@ def run(agent):
 
             state = statePrime
             rewardTotal = rewardTotal + reward
-            
+
             if time.time() - start_time > 59: # reset players every minute. That's how arcade mode works.
                 reward_per_episode[i] = [episode, rewardTotal, agent.steps, agent.latest_Q]
                 print("Episode {}".format(episode) + " Ended. Reward earned: {}".format(rewardTotal))
@@ -323,9 +328,11 @@ def run(agent):
                 raise KeyboardInterrupt('Episodes limit reached')
 
     except KeyboardInterrupt:
-        print("Total Reward:", rewardTotal)
-        agent.model.model.save("TekkenBotDDQNRound1.h5", overwrite=True)
-        print("Model saved as: TekkenBotDDQNRound1.h5")
+        agent.model.model.save("TekkenBotDDQN.h5", overwrite=True)
+        print("Model saved as: TekkenBotDDQN.h5")
+
+        agent.model.target_model.save("TekkenBotDDQN_Target.h5", overwrite=True)
+        print("Target Model saved as: TekkenBotDDQN_Target.h5")
 
         # finish up reward array and save it.
         reward_per_episode[i] = [episode, rewardTotal, agent.steps, agent.latest_Q]
@@ -336,7 +343,7 @@ def run(agent):
 if __name__ == '__main__':
     try:
         agent = LearningAgent(learning=True, epsilon=MAX_EPSILON, alpha=LEARNING_RATE)
-        #import_model(agent)
+        import_model(agent)
         run(agent)
     finally:
         print('Thanks for playing!')
