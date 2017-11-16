@@ -273,7 +273,7 @@ class Memory:
 def import_model(agent):
     try:
         agent.model = Model(agent.inputShape, agent.numActions,
-            load_model('TekkenBotDDQNRound1.h5', custom_objects={'huber_loss':huber_loss}), load_model('TekkenBotDDQNRound1.h5', custom_objects={'huber_loss':huber_loss}))
+            load_model('TekkenBotDDQN.h5', custom_objects={'huber_loss':huber_loss}), load_model('TekkenBotDDQN_Target.h5', custom_objects={'huber_loss':huber_loss}))
         print('Model loaded for agent.')
         #plot_model(agent.model, to_file='TekkenBotDDQNRound1.png')
         #print('Loaded model plotted.')
