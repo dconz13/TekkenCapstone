@@ -80,11 +80,11 @@ class Model:
 
 MEMORY_CAPACITY = 400000
 BATCH_SIZE = 32
-GAMMA = 0.99
+GAMMA = 0.7
 MAX_EPSILON = 1
 MIN_EPSILON = 0.1
 
-EXPLORATION_STOP = 500000
+EXPLORATION_STOP = 1500000
 LAMBDA = - math.log(0.01) / EXPLORATION_STOP
 
 UPDATE_TARGET_FREQUENCY = 10000
@@ -120,10 +120,11 @@ class LearningAgent:
         states = np.array([o[1][0] for o in batch])
         states_ = np.array([(no_state if o[1][3] is None else o[1][3]) for o in batch])
 
+        # p is the prediction for a given state
         p = agent.model.predict(states)
 
-        p_ = agent.model.predict(states_, target=False)
-        pTarget_ = agent.model.predict(states_, target=True)
+        p_ = agent.model.predict(states_, target=False) # target set to false means predict from model
+        pTarget_ = agent.model.predict(states_, target=True) # target true means predict from target model
 
         x = np.zeros((len(batch), IMAGE_STACK, IMAGE_WIDTH, IMAGE_HEIGHT))
         y = np.zeros((len(batch), self.numActions))
@@ -175,6 +176,11 @@ class LearningAgent:
             self.memory.update(idx, errors[i])
 
         self.model.train(x, y)
+
+    def play(self, state):
+        self.state = state
+        action = np.argmax(self.model.predict_one(state))
+        return action
 
 # Gets screen data for HP/screen monitoring and reward feedback
 import mss
@@ -273,7 +279,7 @@ class Memory:
 def import_model(agent):
     try:
         agent.model = Model(agent.inputShape, agent.numActions,
-            load_model('TekkenBotDDQN.h5', custom_objects={'huber_loss':huber_loss}), load_model('TekkenBotDDQN_Target.h5', custom_objects={'huber_loss':huber_loss}))
+            load_model('TekkenBotDDQN_3.h5', custom_objects={'huber_loss':huber_loss}), load_model('TekkenBotDDQN_Target_3.h5', custom_objects={'huber_loss':huber_loss}))
         print('Model loaded for agent.')
         #plot_model(agent.model, to_file='TekkenBotDDQNRound1.png')
         #print('Loaded model plotted.')
@@ -281,7 +287,41 @@ def import_model(agent):
         print('Model failed to load.')
         print(e)
 
-# lets start the show
+# Used when not learning.
+def play(agent):
+    agent.input_handler.activate_remap()
+    vision = Vision('left')
+    w = vision.get_current_screen()
+    state = np.array([w,w])
+    try:
+        while True:
+            actionIndex = agent.play(state)
+            agent.execute_action(actionIndex)
+            screenCap = vision.get_current_screen()
+            statePrime = np.array((state[1], screenCap))
+            state = statePrime
+
+    except KeyboardInterrupt:
+        print('break')
+
+
+TRIAL = 4 # necessary for correct model backup
+TOTAL_TESTS = 3 # 3 12 hour segments of testing
+TOTAL_EPISODES = 720 # 720 = 12 hours
+def save_models(agent, curr_test):
+
+    directory = 'model backup/trial {}'.format(TRIAL)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    filename = directory + "/TekkenBotDDQN_{}.h5".format(curr_test)
+    agent.model.model.save(filename, overwrite=True)
+    print("Model saved as: TekkenBotDDQN_{}.h5".format(curr_test))
+
+    filename = directory + "/TekkenBotDDQN_Target_{}.h5".format(curr_test)
+    agent.model.target_model.save(filename, overwrite=True)
+    print("Target Model saved as: TekkenBotDDQN_Target_{}.h5".format(curr_test))
+
+# lets start the show. Used when learning.
 def run(agent):
     agent.input_handler.activate_remap()
     # character is on the left side of the screen
@@ -294,14 +334,17 @@ def run(agent):
     rewardTotal = 0
     # initial episode
     episode = 0
-    reward_per_episode = np.zeros((725,4))
-    i = 0 #current np array index
+    true_episode = 0
+    curr_test = 1
+    record_size = TOTAL_EPISODES*TOTAL_TESTS # How big to initialize the array depending on time running
+    reward_per_episode = np.zeros((record_size, 4))
+    i = 0 # current np array index
     agent.input_handler.reset_players()
 
     # Press Ctrl + Alt followed by Ctrl + C to break out of the program.
     try:
         while True:
-            actionIndex = agent.choose_action(state)
+            actionIndex = agent.choose_action(state) #index in valid_actions array
             agent.execute_action(actionIndex)
             screenCap = vision.get_current_screen()
             reward = vision.get_reward()
@@ -315,36 +358,42 @@ def run(agent):
             rewardTotal = rewardTotal + reward
 
             if time.time() - start_time > 59: # reset players every minute. That's how arcade mode works.
-                reward_per_episode[i] = [episode, rewardTotal, agent.steps, agent.latest_Q]
+                reward_per_episode[i] = [true_episode, rewardTotal, agent.steps, agent.latest_Q]
                 print("Episode {}".format(episode) + " Ended. Reward earned: {}".format(rewardTotal))
                 episode += 1
+                true_episode += 1
                 rewardTotal = 0
                 i += 1
                 agent.input_handler.reset_players()
                 start_time = time.time()
 
-            if episode >= 720: # 12 hours
-                agent.input_handler.activate_remap()
-                raise KeyboardInterrupt('Episodes limit reached')
+            if episode >= TOTAL_EPISODES:
+                if curr_test >= TOTAL_TESTS:
+                    save_models(agent, curr_test)
+                    agent.input_handler.quit_game()
+                    agent.input_handler.activate_remap()
+                    raise KeyboardInterrupt('Episodes limit reached')
+                else:
+                    save_models(agent, curr_test)
+                    agent.input_handler.reset_map(curr_test)
+                    curr_test += 1
+                    episode = 0
+                    start_time = time.time()
+
 
     except KeyboardInterrupt:
-        agent.model.model.save("TekkenBotDDQN.h5", overwrite=True)
-        print("Model saved as: TekkenBotDDQN.h5")
-
-        agent.model.target_model.save("TekkenBotDDQN_Target.h5", overwrite=True)
-        print("Target Model saved as: TekkenBotDDQN_Target.h5")
-
         # finish up reward array and save it.
-        reward_per_episode[i] = [episode, rewardTotal, agent.steps, agent.latest_Q]
-        print("Episode {}".format(episode) + " Ended. Reward earned: {}".format(rewardTotal))
-        np.savetxt('episodesAndRewards.txt', reward_per_episode, fmt='%d')
+        #reward_per_episode[i] = [episode, rewardTotal, agent.steps, agent.latest_Q]
+        #print("Episode {}".format(episode) + " Ended. Reward earned: {}".format(rewardTotal))
+        np.savetxt('model backup/trial {}/episodesAndRewards.txt'.format(TRIAL), reward_per_episode, fmt='%d')
         print("Episodes and rewards saved to episodesAndRewards.txt")
 
 if __name__ == '__main__':
     try:
         agent = LearningAgent(learning=True, epsilon=MAX_EPSILON, alpha=LEARNING_RATE)
-        import_model(agent)
+        #import_model(agent)
         run(agent)
+        #play(agent)
     finally:
         print('Thanks for playing!')
         #i = InputHandler()

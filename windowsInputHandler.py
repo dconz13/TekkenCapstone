@@ -40,6 +40,7 @@ CIRCLE      = 0x54 # T key
 TRIANGLE    = 0x59 # Y key
 R1          = 0x51 # Q key
 TOUCHPAD    = 0x58 # X key
+OPTIONS     = 0x72 # F3 key
 
 # Diagonal directional buttons with arbitrary values
 DIAG_DOWN_LEFT = (DPAD_LEFT, DPAD_DOWN)
@@ -211,6 +212,109 @@ class InputHandler:
         self.release_key(VK_LCONTROL)
         self.release_key(VK_LMENU)
         time.sleep(0.01)
+
+    def reset_map(self, curr_test):
+        time.sleep(2)
+        # Pause
+        self.press_key(OPTIONS)
+        self.quick_press_delay()
+        self.release_key(OPTIONS)
+        time.sleep(0.5)
+        # Cycle to character select
+        if curr_test == 1:
+            self.press_key(DPAD_UP)
+            self.quick_press_delay()
+            self.release_key(DPAD_UP)
+            time.sleep(0.5)
+
+            self.press_key(DPAD_UP)
+            self.quick_press_delay()
+            self.release_key(DPAD_UP)
+            time.sleep(0.5)
+
+        # Choose character select
+        self.press_key(CROSS)
+        self.quick_press_delay()
+        self.release_key(CROSS)
+        time.sleep(0.5)
+
+        # Choose yes
+        self.press_key(DPAD_LEFT)
+        self.quick_press_delay()
+        self.release_key(DPAD_LEFT)
+        time.sleep(0.5)
+
+        self.press_key(CROSS)
+        self.quick_press_delay()
+        self.release_key(CROSS)
+        time.sleep(0.5)
+
+        # Wait for loading time
+        time.sleep(20)
+        # Choose left side
+        self.press_key(CROSS)
+        self.quick_press_delay()
+        self.release_key(CROSS)
+        # Wait for loading time
+        time.sleep(20)
+
+        # Select Josie
+        self.press_key(CROSS)
+        self.quick_press_delay()
+        self.release_key(CROSS)
+        time.sleep(0.5)
+        # Select Dragunov
+        self.press_key(CROSS)
+        self.quick_press_delay()
+        self.release_key(CROSS)
+        time.sleep(0.5)
+
+        # Wait for loading time
+        time.sleep(20)
+
+        self.press_key(DPAD_UP)
+        self.quick_press_delay()
+        self.release_key(DPAD_UP)
+        time.sleep(0.5)
+
+        # Choose geometric plane map
+        self.press_key(CROSS)
+        self.quick_press_delay()
+        self.release_key(CROSS)
+        # Wait for loading time
+        time.sleep(40)
+
+        # Restart players
+        self.reset_players()
+
+    def quit_game(self):
+        time.sleep(2)
+        # Pause
+        self.press_key(OPTIONS)
+        self.quick_press_delay()
+        self.release_key(OPTIONS)
+
+        # Select return to main menu
+        time.sleep(0.5)
+        self.press_key(DPAD_DOWN)
+        self.quick_press_delay()
+        self.release_key(DPAD_DOWN)
+
+        time.sleep(0.5)
+        self.press_key(CROSS)
+        self.quick_press_delay()
+        self.release_key(CROSS)
+
+        # Select yes
+        time.sleep(0.5)
+        self.press_key(DPAD_LEFT)
+        self.quick_press_delay()
+        self.release_key(DPAD_LEFT)
+
+        time.sleep(0.5)
+        self.press_key(CROSS)
+        self.quick_press_delay()
+        self.release_key(CROSS)
 
     def hold_delay(self):
         time.sleep(random.uniform(0.1, 0.2))
