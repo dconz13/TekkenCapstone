@@ -9,7 +9,10 @@ project creates an agent that is able to play the fighting game Tekken 7 remotel
 Playstation 4. It uses an implementation of a DDQN network to accomplish this task.
 
 #### Proposal
-My proposal is provided in the __proposal.pdf__. For a better experience and to view the gifs provided in the Free-Form Visualization section, I recommend viewing my proposal as the original [Google Docs document](https://docs.google.com/document/d/1_Nx28ke67M_vB9xj3CPgHItSL-JsS-XwrG-8WPnxfl4/edit?usp=sharing).
+My proposal is provided in the __proposal.pdf__. 
+
+#### Report
+For a better experience and to view the gifs provided in the Free-Form Visualization section, I recommend viewing my project report as the original [Google Docs document](https://docs.google.com/document/d/1_Nx28ke67M_vB9xj3CPgHItSL-JsS-XwrG-8WPnxfl4/edit?usp=sharing).
 
 #### Setup
 All Python requirements are provided as a pip freeze in the __requirements.txt__ file.
