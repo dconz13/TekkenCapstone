@@ -80,11 +80,11 @@ class Model:
 
 MEMORY_CAPACITY = 400000
 BATCH_SIZE = 32
-GAMMA = 0.7
+GAMMA = 0.99
 MAX_EPSILON = 1
 MIN_EPSILON = 0.1
 
-EXPLORATION_STOP = 1500000
+EXPLORATION_STOP = 500000
 LAMBDA = - math.log(0.01) / EXPLORATION_STOP
 
 UPDATE_TARGET_FREQUENCY = 10000
@@ -305,9 +305,9 @@ def play(agent):
         print('break')
 
 
-TRIAL = 4 # necessary for correct model backup
+TRIAL = 6 # necessary for correct model backup
 TOTAL_TESTS = 3 # 3 12 hour segments of testing
-TOTAL_EPISODES = 720 # 720 = 12 hours
+TOTAL_EPISODES = 540 # 720 = 12 hours
 def save_models(agent, curr_test):
 
     directory = 'model backup/trial {}'.format(TRIAL)
@@ -391,9 +391,9 @@ def run(agent):
 if __name__ == '__main__':
     try:
         agent = LearningAgent(learning=True, epsilon=MAX_EPSILON, alpha=LEARNING_RATE)
-        #import_model(agent)
-        run(agent)
-        #play(agent)
+        import_model(agent)
+        #run(agent)
+        play(agent)
     finally:
         print('Thanks for playing!')
         #i = InputHandler()

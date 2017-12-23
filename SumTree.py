@@ -3,7 +3,7 @@ This code was written by GitHub user Jaromír
 Link to his work:
 https://github.com/jaara/AI-blog/blob/master/SumTree.py
 
-This SumTree is used to create the experience replay for the DQQN.
+This SumTree is used to create the prioritized experience replay for the DQQN.
 '''
 
 import numpy

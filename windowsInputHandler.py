@@ -1,6 +1,9 @@
 # This code is the combination of multiple blog posts.
 # It uses ctypes to get the processID for PS4 Remote Play
-# and then feed keyboard commands to it.
+# and then feed keyboard commands to it. Later on I discovered
+# REM4P can detect Ctrl + Alt from anywhere and will automatically
+# latch onto the PS4 process so the process detection isn't used.
+# The code has been kept just for history and just in case it is needed.
 #
 # The blogs can be found at:
 # https://sjohannes.wordpress.com/2012/03/23/win32-python-getting-all-window-titles/
@@ -399,18 +402,7 @@ class InputHandler:
             execute_actions(actions=actions)
             x = x-1
 
-    def alt_tab():
-        """Press Alt+Tab and hold Alt key for 2 seconds
-        in order to see the overlay.
-        """
-        press_key(VK_MENU)   # Alt
-        press_key(VK_TAB)    # Tab
-        release_key(VK_TAB)  # Tab~
-        time.sleep(2)
-        release_key(VK_MENU) # Alt~
-
     # if __name__ == "__main__":
-    #     #AltTab()
     #     GetRemotePlayPID()
     #     focus_window(global_PS4RemotePlayHWND)
     #     time.sleep(1)
