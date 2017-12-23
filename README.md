@@ -14,6 +14,8 @@ My proposal is provided in the __proposal.pdf__. For a better experience and to 
 #### Setup
 All Python requirements are provided as a pip freeze in the __requirements.txt__ file.
 
+I have left my models in the "model backup" folder. These can be imported and used as the model for the agent if you want to see it running without training it.
+
 To run the program follow the steps listed below:
 1. Open REM4P application
 2. Make sure the REM4P 'configure controller' settings match the ones I provided in the
